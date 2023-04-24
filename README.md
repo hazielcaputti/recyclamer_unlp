@@ -40,4 +40,7 @@ roslaunch vrx_gazebo vrx.launch
 ```
 
 Y deberias poder correr el simulador.
+<<<<<<< HEAD
 
+=======
+>>>>>>> ba6c2516 (update)
