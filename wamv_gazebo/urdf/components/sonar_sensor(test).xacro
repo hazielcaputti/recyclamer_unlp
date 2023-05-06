@@ -1,68 +1,56 @@
 <?xml version="1.0"?>
-
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:macro name="sonar_sensor" params="name parent *origin ros_topic update_rate min_range max_range field_of_view ray_count">
-    <joint name="${name}_joint" type="fixed">
-      <xacro:insert_block name="origin" />
+
+  <!-- MTK3339 Constants -->
+  <xacro:property name="sonar_depth" value="0.01454" />
+  <xacro:property name="sonar_width" value="0.0457" />
+  <xacro:property name="sonar_height" value="0.0213" />
+  <xacro:property name="sonar_mass" value="0.020" />    
+  <!-- MTK3339 constants -->
+
+  <!-- Inertias Macros
+  <xacro:include filename="$(find jetbot_description)/urdf/includes/gazebo/inertias.xacro" />
+ -->
+
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/sonar_sensor.xacro" />
+
+
+  <xacro:macro name="sensor_sonar" params="name x y z R:=0 P:=0 Y:=0 ros_topic update_rate min_range max_range field_of_view ray_count">
+  
+  <!-- Sonar HCSR04 -->
+    <joint name="${prefix}_${name}_joint" type="fixed">
       <parent link="${parent}"/>
-      <child link="${name}_link"/>
+      <child link="${prefix}_${name}_link"/>
+      <xacro:insert_block name="origin" />
     </joint>
 
-    <link name="${name}_link">
-      <inertial>
-        <mass value="0.001" />
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <inertia ixx="0.000000017" ixy="0" ixz="0" iyy="0.000000017" iyz="0" izz="0.000000017" />
-      </inertial>
+    <link name="${prefix}_${name}_link">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 -${sonar_width/2} -${sonar_height/2}" rpy="${pi/2} 0 ${pi/2}"/>
         <geometry>
-          <!--<box size="0.01 0.01 0.01" /> -->
-          <mesh filename="package://hector_sensors_description/meshes/sonar_sensor/max_sonar_ez4.dae"/>
+          <mesh filename="package://prueba2/src/vrx_gazebo/models/sonar/hcsr04.stl" scale="0.001 0.001 0.001"/>
         </geometry>
+        <material name="purple"/>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 ${sonar_depth/2}" rpy="0 0 0"/>
         <geometry>
-          <box size="0.01 0.01 0.01" />
+          <box size="${sonar_width} ${sonar_height} ${sonar_depth}"/>
         </geometry>
       </collision>
+      <xacro:cuboid_inertia mass="${sonar_mass}" x="${sonar_width}" y="${sonar_height}" z="${sonar_depth}" />
     </link>
+    <!-- Sonar Plugin -->
+    <xacro:gazebo_sonar name="${prefix}_${name}" 
+                        reference_link="${prefix}_${name}_link" 
+                        topic_ns="${name}"
+                        update_rate="10" 
+                        min_range="0.3" 
+                        max_range="1.5" 
+                        field_of_view="50" 
+                        ray_count="2" />    
+    <!-- Sonar Plugin -->
 
-    <gazebo reference="${name}_link">
-      <sensor type="ray" name="${name}">
-        <always_on>true</always_on>
-        <update_rate>${update_rate}</update_rate>
-        <pose>0 0 0 0 0 0</pose>
-        <visualize>false</visualize>
-        <ray>
-          <scan>
-            <horizontal>
-              <samples>${ray_count}</samples>
-              <resolution>1</resolution>
-              <min_angle>-${field_of_view/2}</min_angle>
-              <max_angle> ${field_of_view/2}</max_angle>
-            </horizontal>
-            <vertical>
-              <samples>${ray_count}</samples>
-              <resolution>1</resolution>
-              <min_angle>-${field_of_view/2}</min_angle>
-              <max_angle> ${field_of_view/2}</max_angle>
-            </vertical>
-          </scan>
-          <range>
-            <min>${min_range}</min>
-            <max>${max_range}</max>
-            <resolution>0.01</resolution>
-          </range>
-        </ray>
-
-        <plugin name="gazebo_ros_${name}_controller" filename="libhector_gazebo_ros_sonar.so">
-          <gaussianNoise>0.005</gaussianNoise>
-          <topicName>${ros_topic}</topicName>
-          <frameId>${name}_link</frameId>
-        </plugin>
-      </sensor>
-    </gazebo>
   </xacro:macro>
+
 </robot>
